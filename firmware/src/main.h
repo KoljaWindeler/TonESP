@@ -45,7 +45,6 @@
 #define MODE_COMPLETE_FOLDER_CONTINUUES 	5
 #define MODE_ADMIN_CARD 									6
 
-
 // declare vars here
 uint16_t temp_16;
 uint8_t state;
@@ -61,15 +60,25 @@ uint32_t power_down_at_ts = 0;
 
 uint32_t last_seen_card = 0;
 uint32_t last_asked_for_card = 0;
+uint8_t ask_for_card = 0;
+
+uint8_t mp3_voice_menu_status = 0;
 
 uint8_t uid[10];  // Buffer to store the returned UID
 uint8_t uidLength;                        // Length of the UID (4 or 7 bytes depending on ISO14443A card type)
 Adafruit_MCP23017 mcp;
 list cardList;
-listElement* card;
+listElement* card_scanned;
+listElement* card_found;
 DFMiniMp3 mp3;
-uint8_t mp3_status = 0;
-//MFRC522 mfrc522(0x28,2);	// Create MFRC522 instance.
+
+void prevTrack();
+void nextTrack();
+void powerDown(const __FlashStringHelper* log);
+bool voiceMenu(uint16_t* data, uint8_t max, uint16_t offset, uint8_t* status, bool preview = false, int previewFromFolder = 0);
+uint8_t key_menu();
+
+
 
 
 
