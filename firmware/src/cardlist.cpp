@@ -25,10 +25,16 @@ void listElement::set_uuid(byte* uid, uint8_t size){
 	for(uint8_t i=size; i<10;i++){
 		m_uidByte[i]=0x00;
 	}
+
+	m_uidByteLength=size;
 }
 
 byte* listElement::get_uuid(){
 	return m_uidByte;
+}
+
+uint8_t listElement::get_uuidLength(){
+	return m_uidByteLength;
 }
 
 
@@ -53,12 +59,24 @@ uint8_t listElement::get_mode(){
 	return m_mode;
 }
 
+uint8_t* listElement::get_mode_p(){
+	return &m_mode;
+}
+
 uint8_t listElement::get_folder(){
 	return m_folder;
 }
 
+uint8_t* listElement::get_folder_p(){
+	return &m_folder;
+}
+
 uint16_t listElement::get_track(){
 	return m_track;
+}
+
+uint16_t* listElement::get_track_p(){
+	return &m_track;
 }
 
 void listElement::set_mode(uint8_t mode){
@@ -82,12 +100,14 @@ list::list(){
 	length = 0;
 	first = NULL;
 	SPIFFS.begin();
+	//SPIFFS.format();
 };
 
 list::~list(){};
 
 bool list::store(){
 	Serial.println("storing /cards.txt");
+	delay(200);
 	File f = SPIFFS.open("/cards.txt", "w");
 	if (!f) {
     Serial.println("file open failed");
@@ -120,8 +140,11 @@ bool list::load(){
 			listElement* e = new listElement(uid,10);
 			e->set_mode(uid[10]);
 			e->set_folder(uid[11]);
-			e->set_track((((uint16_t)uid[12])<<4) & uid[13]);
-			Serial.printf("Mode: %i, Folder: %02i, Track: %03i\r\n",e->get_mode(), e->get_folder(), e->get_track());
+			e->set_track((((uint16_t)uid[13])<<4) | uid[12]);
+			for(uint i=0; i<14; i++){
+				Serial.printf("%02x ",uid[i]);
+			}
+			Serial.printf("\r\nMode: %i, Folder: %02i, Track: %03i\r\n",e->get_mode(), e->get_folder(), e->get_track());
 			add_uid(e);
 		}
 		f.close();
@@ -130,12 +153,23 @@ bool list::load(){
 };
 
 void list::add_uid(listElement* element){
+	if(first == NULL){
+		Serial.println("erstes element null, setze es");
+		delay(200);
+		first = element;
+		return;
+	}
 	listElement* e=first;
 	while(e != NULL){
 		if(e->get_next() == NULL){
+			Serial.println("e get next null, set next");
+			delay(200);
 			e->set_next(element);
 			length++;
+			return;
 		} else {
+			Serial.println("e get next not null");
+			delay(200);
 			e = e->get_next();
 		}
 	}
