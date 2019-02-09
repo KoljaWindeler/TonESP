@@ -1,3 +1,5 @@
+#ifndef DFMINI_h
+#define DFMINI_h
 /*-------------------------------------------------------------------------
 DFMiniMp3 library
 
@@ -113,6 +115,11 @@ public:
     void playAdvertisement(uint16_t track);
     void stopAdvertisement();
 
+		uint8_t max_folder = 0;
+		uint16_t max_file_in_folder = 0;
+
+		uint8_t status = 0;
+
 private:
     static const uint16_t c_msSendSpace = 50;
 		SoftwareSerial* mySerial; // RX, TX
@@ -151,3 +158,5 @@ private:
     void setChecksum(uint8_t* out);
     bool validateChecksum(uint8_t* in);
 };
+
+#endif
