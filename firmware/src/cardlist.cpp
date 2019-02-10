@@ -55,19 +55,19 @@ bool listElement::compare_uid(byte* uid, uint8_t size){
 	return true;
 }
 
-uint8_t listElement::get_mode(){
+uint16_t listElement::get_mode(){
 	return m_mode;
 }
 
-uint8_t* listElement::get_mode_p(){
+uint16_t* listElement::get_mode_p(){
 	return &m_mode;
 }
 
-uint8_t listElement::get_folder(){
+uint16_t listElement::get_folder(){
 	return m_folder;
 }
 
-uint8_t* listElement::get_folder_p(){
+uint16_t* listElement::get_folder_p(){
 	return &m_folder;
 }
 
@@ -79,11 +79,11 @@ uint16_t* listElement::get_track_p(){
 	return &m_track;
 }
 
-void listElement::set_mode(uint8_t mode){
+void listElement::set_mode(uint16_t mode){
 	m_mode = mode;
 }
 
-void listElement::set_folder(uint8_t folder){
+void listElement::set_folder(uint16_t folder){
 	m_folder = folder;
 }
 
@@ -114,13 +114,15 @@ bool list::store(){
 	} else {
 		listElement* e = first;
 		while(e!=NULL){
-			Serial.println("Storing 14 bytes");
+			//Serial.println("Storing 16 bytes");
 			f.write(e->get_uuid(), 10);
-			f.write(e->get_mode());
-			f.write(e->get_folder());
-			uint16_t t=e->get_track();
-			f.write((uint8_t*)&t,2);
-			Serial.printf("Mode: %i, Folder: %02i, Track: %03i\r\n",e->get_mode(), e->get_folder(), e->get_track());
+			uint16_t t=e->get_mode();
+			f.write(((uint8_t*)&t),2);
+			t=e->get_folder();
+			f.write(((uint8_t*)&t),2);
+			t=e->get_track();
+			f.write(((uint8_t*)&t),2);
+			//Serial.printf("Mode: %i, Folder: %02i, Track: %03i\r\n",e->get_mode(), e->get_folder(), e->get_track());
 			e = e->get_next();
 		}
 		f.close();
@@ -129,47 +131,78 @@ bool list::store(){
 };
 
 bool list::load(){
-	Serial.println("loading /cards.txt");
+	uint16_t cards_loaded=0;
+
+	uint8_t ii=0;
+	while(first!=NULL){
+		uint8_t i=0;
+		listElement* e=first;
+		listElement* e2=first;
+		while(e2->get_next()!=NULL){
+			e=e2;
+			e2=e2->get_next();
+			i++;
+		}
+		if(e2!=NULL){
+			Serial.printf("Deleting card nr %i from RAM\r\n",i);
+			delete e2;
+			ii++;
+		}
+		if(i==0){
+			first = NULL;
+		} else {
+			e->set_next(NULL);
+		}
+	}
+	Serial.printf("%i cards deleted from RAM\r\n",ii);
+
+
+	//Serial.println("loading /cards.txt");
 	if(SPIFFS.exists("/cards.txt")){
-		Serial.println("File existed");
+		//Serial.println("File existed");
 		File f = SPIFFS.open("/cards.txt", "r");
-		byte uid[14];
-		while(f.available()>=14){
-			Serial.println("Reading 14 bytes");
-			f.read(uid, 14);
+		byte uid[16];
+		while(f.available()>=16){
+			cards_loaded++;
+			//Serial.println("Reading 16 bytes");
+			//delay(200);
+			f.read(uid, 16);
 			listElement* e = new listElement(uid,10);
-			e->set_mode(uid[10]);
-			e->set_folder(uid[11]);
-			e->set_track((((uint16_t)uid[13])<<4) | uid[12]);
-			for(uint i=0; i<14; i++){
-				Serial.printf("%02x ",uid[i]);
-			}
-			Serial.printf("\r\nMode: %i, Folder: %02i, Track: %03i\r\n",e->get_mode(), e->get_folder(), e->get_track());
+			//Serial.println("set mode");
+			//delay(200);
+			e->set_mode((((uint16_t)uid[11])<<4) | uid[10]);
+			e->set_folder((((uint16_t)uid[13])<<4) | uid[12]);
+			e->set_track((((uint16_t)uid[15])<<4) | uid[14]);
+			//for(uint i=0; i<16; i++){
+			//	Serial.printf("%02x ",uid[i]);
+			//}
+			//Serial.printf("\r\nMode: %i, Folder: %02i, Track: %03i\r\n",e->get_mode(), e->get_folder(), e->get_track());
 			add_uid(e);
 		}
 		f.close();
+		Serial.printf("%i cards loaded to RAM\r\n",cards_loaded);
 	}
 	return true;
 };
 
 void list::add_uid(listElement* element){
 	if(first == NULL){
-		Serial.println("erstes element null, setze es");
-		delay(200);
+		//Serial.println("erstes element null, setze es");
+		//delay(200);
 		first = element;
 		return;
 	}
 	listElement* e=first;
 	while(e != NULL){
 		if(e->get_next() == NULL){
-			Serial.println("e get next null, set next");
-			delay(200);
+			//Serial.println("e get next null, set next");
+			//delay(200);
 			e->set_next(element);
 			length++;
 			return;
 		} else {
-			Serial.println("e get next not null");
-			delay(200);
+			//Serial.println("e get next not null");
+			//delay(200);
 			e = e->get_next();
 		}
 	}
