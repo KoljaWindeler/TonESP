@@ -12,11 +12,26 @@ char m_msg_buffer[MSG_BUFFER_SIZE];
 uint32_t wifi_last_connect = 0;
 
 
+bool publish_card(listElement* e){
+	uint8_t buffer[32];
+	uint8_t ret;
+	if(e==NULL){
+		return false;
+	}
+	e->dump_ascii(buffer);
+	ret = client.publish(build_topic("out", UNIT_TO_PC),(char*)buffer);
+	for(uint8_t i=0;i<10;i++){
+		client.loop();
+		delay(10); // let wifi process data
+	}
+	return ret;
+}
+
 // call via MQTT callback
 // IN Topic, payload and length
 void callback(char * p_topic, byte * p_payload, uint16_t p_length){
 	p_payload[p_length]=0x00;
-	Serial.printf("[MQTT] Topic %s, Msg %s\r\n",p_topic,p_payload);
+	debug_printf("MQTT",0,"Topic %s, Msg %s\r\n",p_topic,p_payload);
 
 	///////////// TOPIC: ctrl /////////////
 	if(strcmp((const char*)p_topic, build_topic("ctrl", PC_TO_UNIT))==0){
@@ -42,14 +57,9 @@ void callback(char * p_topic, byte * p_payload, uint16_t p_length){
 			// reuse card scanned, so we can keep card_found as is
 			uint16_t ii=0;
 			card_scanned = cardList.get_element_nr(ii);
-			uint8_t buffer[32];
+			//uint8_t buffer[32];
 			while(card_scanned!=NULL){
-				card_scanned->dump_ascii(buffer);
-				client.publish(build_topic("out", UNIT_TO_PC),(char*)buffer);
-				for(uint8_t i=0;i<10;i++){
-					client.loop();
-					delay(10); // let wifi process data
-				}
+				publish_card(card_scanned);
 				ii++;
 				card_scanned = cardList.get_element_nr(ii);
 			}
@@ -234,7 +244,7 @@ bool wifi_scan_connect(){
 					}
 				}
 			}
-			Serial.printf("[Wifi] Connect to %s -> %s\r\n",wifi_config[best*2],wifi_config[best*2+1]);
+			debug_printf("Wifi",0,"Connect to %s -> %s\r\n",wifi_config[best*2],wifi_config[best*2+1]);
 			WiFi.mode(WIFI_STA);
 			WiFi.disconnect();
 			delay(1);
@@ -264,7 +274,7 @@ bool wifi_connected(){
 			//Serial.println(WiFi.localIP());
 			if(client.connect("TonESP1", "ha", "ah")){
 				//if(client.connect("TonESP1", "ha", "ah", "TonESP1/INFO", 0, true, "lost signal")){
-				Serial.println("[MQTT] connected");
+				debug_println("MQTT",0,"connected");
 				wifi_status = 2;
 
 				client.subscribe(build_topic("ctrl", PC_TO_UNIT)); // MQTT_TRACE_TOPIC topic
@@ -277,10 +287,10 @@ bool wifi_connected(){
 				}
 
 				if(client.publish(build_topic("out", UNIT_TO_PC),"test22")){
-					Serial.println("[MQTT] Published");
+					debug_println("MQTT",0,"Published");
 				} // MQTT_TRACE_TOPIC topic
 				else {
-					Serial.println("[MQTT] Publish failed");
+					debug_println("MQTT",0,"Publish failed");
 				}
 				client.loop();
 			}

@@ -68,6 +68,33 @@
 #define ADMIN_CARD_MODE_MAX_PLAYTIME					3
 #define ADMIN_CARD_MODE_SHUTDOWN_AFTER_TRACK 	4
 
+
+#define DEBUG_PRINT(str) \
+   Serial.print(millis()); \
+   Serial.print(": "); \
+   Serial.print(__FUNCTION__); \
+   Serial.print("() in "); \
+   Serial.print(__FILE__); \
+   Serial.print(':'); \
+   Serial.print(__LINE__); \
+   Serial.print(' '); \
+   Serial.println(str);
+
+#define debug_printf(c,i,args...) \
+	Serial.printf("%02i:%02i:%02i ",((millis()/1000UL)%86400)/3600 ,((millis()/1000UL)%3600)/60 ,(millis()/1000UL)%60); \
+	Serial.printf("[%-8s] ",c); \
+	Serial.printf(args);
+
+#define debug_print(c,i,args...) \
+		Serial.printf("%02i:%02i:%02i ",((millis()/1000UL)%86400)/3600 ,((millis()/1000UL)%3600)/60 ,(millis()/1000UL)%60); \
+		Serial.printf("[%-8s] ",c); \
+		Serial.print(args);
+
+#define debug_println(c,i,args...) \
+	Serial.printf("%02i:%02i:%02i ",((millis()/1000UL)%86400)/3600 ,((millis()/1000UL)%3600)/60 ,(millis()/1000UL)%60); \
+	Serial.printf("[%-8s] ",c); \
+	Serial.println(args);
+
 extern uint8_t gpio_state;
 extern PN532_I2C pn532i2c;
 extern PN532 nfc;
@@ -79,5 +106,7 @@ extern DFMiniMp3 mp3;
 extern PubSubClient client;
 extern uint8_t uid[10];
 extern uint8_t state;
+
+extern bool publish_card(listElement* e);
 
 #endif

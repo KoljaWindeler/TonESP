@@ -51,12 +51,14 @@ bool listElement::compare_uid(byte* uid, uint8_t size){
 	if(size>10){
 		size = 10;
 	}
-	/*Serial.print("compare uids this card: ");
+	/*
+	Serial.print("compare uids this card: ");
 	for(uint8_t i=0;i<10;i++){
 		Serial.printf("0x%x ",m_uidByte[i]);
 	}
 	Serial.printf(" this mem %i\r\n",this);
 	*/
+
 
 	for(uint8_t i=0;i<size;i++){
 		//Serial.printf("%02x,%02x ",m_uidByte[i],*uid);
@@ -108,7 +110,7 @@ void listElement::set_track(uint8_t track){
 
 void listElement::set_next(listElement* element){
 	if(this == element){
-		Serial.println("[card] Critical error, Loop detected!!");
+		debug_println("card",0,"Critical error, Loop detected!!");
 		return;
 	}
 	m_next = element;
@@ -126,12 +128,12 @@ list::~list(){};
 
 // store the list into the SPIFFS
 bool list::store(){
-	Serial.print(F("[card] storing /cards.txt .. "));
+	debug_print(("card"),0,F("storing /cards.txt .. "));
 	//delay(200);
 	uint16_t i=0;
-	File f = SPIFFS.open("/cards.txt", "w");
+	File f = SPIFFS.open("/cards2.txt", "w");
 	if (!f) {
-    Serial.println(F("[card] file open failed"));
+    debug_println(("card"),0,F("file open failed"));
 	} else {
 		listElement* e = first;
 		uint8_t temp[13];
@@ -163,6 +165,8 @@ bool list::store(){
 			i++;
 		}
 		f.close();
+		SPIFFS.remove("/cards.txt");
+		SPIFFS.rename("/cards2.txt","/cards.txt");
 		Serial.printf("completed, %i cards stored\r\n",i);
 		delay(200);
 	}
@@ -192,7 +196,7 @@ void list::clear(){
 			e->set_next(NULL);
 		}
 	}
-	Serial.printf("[card] %i cards deleted from RAM\r\n",ii);
+	debug_printf("card", 0, " %i cards deleted from RAM\r\n",ii);
 }
 
 // load cards from SPIFFS
@@ -200,7 +204,7 @@ bool list::load(){
 	uint16_t cards_loaded=0;
 	clear();
 
-	Serial.println("[card] loading /cards.txt");
+	debug_println(("card"),0,F("loading /cards.txt"));
 	if(SPIFFS.exists("/cards.txt")){
 		//Serial.println("File existed");
 		File f = SPIFFS.open("/cards.txt", "r");
@@ -217,7 +221,7 @@ bool list::load(){
 			e->set_folder(temp[11]);
 			e->set_track(temp[12]);
 
-			Serial.printf("[card] (%i) Mode: %i, Folder: %02i, Track: %03i, UUID: ", cards_loaded, e->get_mode(), e->get_folder(), e->get_track());
+			debug_printf("card",0,"(%i) Mode: %i, Folder: %02i, Track: %03i, UUID: ", cards_loaded, e->get_mode(), e->get_folder(), e->get_track());
 			for(uint i=0; i<10; i++){
 				Serial.printf("%02x",temp[i]);
 			}
@@ -225,7 +229,7 @@ bool list::load(){
 			add_uid(e);
 		}
 		f.close();
-		Serial.printf("[card] %i cards loaded to RAM\r\n",cards_loaded);
+		debug_printf("card",0,"%i cards loaded to RAM\r\n",cards_loaded);
 		delay(200);
 	}
 	return true;

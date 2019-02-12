@@ -11,8 +11,6 @@ void mcp_irq_callback(){
 	mcp_interrupt_pending = true;
 }
 
-
-
 // so we got different variables
 // 1. gpio_state -> holds the current state of the inputs
 // 2. gpio_down -> is high (bitwise) if the key was down once or is. sort of temporary var
@@ -74,7 +72,7 @@ bool voiceMenu(uint8_t * data, uint8_t max, uint16_t offset, uint8_t * status){
 	}
 
 	if (play) {
-		Serial.printf("[Menu] MP3 File %i\r\n", offset + *data);
+		debug_printf("Menu",0,"MP3 File %i\r\n", offset + *data);
 		mp3.playMp3FolderTrack(offset + *data);
 		return ret;
 	}
@@ -91,7 +89,7 @@ void powerDown(const __FlashStringHelper * log){
 
 // either the "next" track was pushed or the last track was over
 void play(uint8_t typ){
-	Serial.print(F("[Play] "));
+	debug_print(("Play"),0,F(""));
 	//// track error handling ////
 	if (card_found == NULL){
 		Serial.println(F("Track avoided card_found == NULL"));
@@ -102,7 +100,7 @@ void play(uint8_t typ){
 	}
 	if (card_found->get_folder() > mp3.max_folder - 2) { // - 2 for advert and mp3 folder
 		// TODO: play correct error Track
-		Serial.println(F("Folder > available Folders on card"));
+		Serial.printf("Folder (%i) > available Folders on card (%i)\r\n",card_found->get_folder(),mp3.max_folder - 2);
 		return;
 	}
 	// check max file in folder
@@ -212,7 +210,7 @@ void play(uint8_t typ){
 	}
 	// and fire
 	if (playNext) {
-		Serial.printf("[Play] Folder %02i, Track %03i\r\n",card_found->get_folder(), card_found->get_track());
+		debug_printf("Play",0,"Folder %02i, Track %03i\r\n",card_found->get_folder(), card_found->get_track());
 		mp3.playFolderTrack(card_found->get_folder(), card_found->get_track());
 	}
 } // play
@@ -235,15 +233,17 @@ void setup(){
 	// load data from storage
 	cardList.load(); // load cards from storage
 	memset(uid, 0x01, 10); // 10 bytes of 0x01 == Startup card
-	card_scanned = cardList.is_uid_known(uid, 10); // search for emulated startup card
+	card_scanned  = new listElement(uid, 10); // create new card, just to be able to call the card functions
+	card_found = cardList.is_uid_known(uid, 10); // search for emulated startup card
+	//Serial.printf("card_scanned lieg bei adresse %i\r\n",card_scanned);
+	//debug_printf("card_scanned lieg bei adresse %i\r\n",card_scanned);
 	if(card_scanned != NULL){
 		// startup card found, play
-		Serial.println(F("[card] Startup card found"));
+		debug_println(("card"),0,F("Startup card found"));
 		state = STATE_NEW_CARD;
 	} else {
 		// if there is no startup card in storage
-		Serial.println(F("[card] No startup card found"));
-		card_scanned  = new listElement(uid, 10); // create new card, just to be able to call the card functions
+		debug_println(("card"),0,F("No startup card found"));
 		state = STATE_IDLE; // no startup card, so keep idle
 	}
 
@@ -270,9 +270,9 @@ void setup(){
 
 
 	// ////////////////// mcp - port expander //////////////////
-	Serial.println(F("[mcp] search"));
+	debug_println(("mcp"),0,F("search"));
 	if (mcp.begin()) {
-		Serial.println("[mcp] found");
+		debug_println(("mcp"),0,"found");
 		attachInterrupt(MCP_IRQ_PIN, mcp_irq_callback, FALLING);
 		mcp.setupInterrupts(true, false, LOW);
 		for (uint8_t p = 0; p < 8; p++) {
@@ -307,21 +307,21 @@ void setup(){
 	if (mp3.getVolume() == 6) {
 		mp3.setVolume(4);
 		if (mp3.getVolume() == 4) {
-			Serial.println("[mp3] Player online");
+			debug_println(("mp3"),0,"Player online");
 			mp3.max_folder = mp3.getTotalFolderCount();
 			mp3.setVolume(mySettings.m_current_volume);
 		} else {
-			Serial.println("[mp3] Player offline");
+			debug_println(("mp3"),0,"Player offline");
 		}
 	} else {
-		Serial.println("[mp3] Player offline");
+		debug_println(("mp3"),0,"Player offline");
 	}
 
 	// ////////////////// NFC ///////////////
 	nfc.begin();
 	uint32_t versiondata = nfc.getFirmwareVersion();
 	while (!versiondata) {
-		Serial.println("[PN532] Didn't find board");
+		debug_println(("PN532"),0,"Didn't find board");
 		nfc.begin();
 		versiondata = nfc.getFirmwareVersion();
 		// Set the max number of retry attempts to read from a card
@@ -331,9 +331,9 @@ void setup(){
 	nfc.setPassiveActivationRetries(0xFF);
 	// configure board to read RFID tags
 	nfc.SAMConfig();
-	Serial.print("[PN532] Found chip PN5");
+	debug_print(("PN532"),0,"Found chip PN5");
 	Serial.println((versiondata >> 24) & 0xFF, HEX);
-	Serial.print("[PN532] Firmware ver. ");
+	debug_print(("PN532"),0,"Firmware ver. ");
 	Serial.print((versiondata >> 16) & 0xFF, DEC);
 	Serial.print('.');
 	Serial.println((versiondata >> 8) & 0xFF, DEC);
@@ -365,7 +365,7 @@ void loop(){
 	// no actaul communication will bestarted on this behalf
 	mp3.status = mp3.loop();
 	if (mp3.status) {
-		Serial.print(F("[Mp3] Feedback: "));
+		debug_print(("mp3"),0,F("Feedback: "));
 		if (mp3.status == DFMP3_PLAY_FINISHED) {
 			Serial.println(F("play finished"));
 			if (power_down_after_track) {
@@ -393,12 +393,13 @@ void loop(){
 	// check if the PN532 triggered the interrupt
 	// bf 1011 1111
 	if (!(gpio_state & (1 << MCP_PIN_PN532_IRQ))) { // low active interrupt
-		Serial.print(F("[RFID/NFC] interrupt "));
+		debug_print(("RFID/NFC"),0,F("interrupt "));
 		// delay(200);
 		if (nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength, 50)) {
 			// card already there
+			//Serial.printf("Scanned card: 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x %i \r\n", uid[0], uid[1], uid[2], uid[3], uid[4], uid[5], uid[6], uid[7], uid[8], uid[9], uidLength);
 			if (card_scanned->compare_uid(uid, uidLength)) {
-				Serial.printf("SAME card: 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x %i ", uid[0], uid[1], uid[2], uid[3], uid[4], uid[5], uid[6], uid[7], uid[8], uid[9], uidLength);
+				//Serial.printf("SAME card: 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x %i ", uid[0], uid[1], uid[2], uid[3], uid[4], uid[5], uid[6], uid[7], uid[8], uid[9], uidLength);
 				if(millis()-last_seen_card>3000){
 					Serial.println("Card was absend for >3sec, restart play");
 					state = STATE_NEW_CARD;
@@ -406,14 +407,14 @@ void loop(){
 				// don't handle card
 			} else {
 				card_scanned->set_uuid(uid, uidLength);
-				Serial.printf("NEW card: 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x %i", uid[0], uid[1], uid[2], uid[3], uid[4], uid[5], uid[6], uid[7], uid[8], uid[9], uidLength);
+				//Serial.printf("NEW card: 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x %i", uid[0], uid[1], uid[2], uid[3], uid[4], uid[5], uid[6], uid[7], uid[8], uid[9], uidLength);
 				state = STATE_NEW_CARD;
 			}
 			last_seen_card = millis();
 		}
 		Serial.println(F(""));
 	} else if (last_asked_for_card < last_seen_card && millis() > last_seen_card + 1000) { // the +1000 limits the amount of requests to the i2c
-		Serial.println(F("[RFID/NFC] read Passive tag irq waiter re-enabeld"));
+		debug_println(("RFID/NFC"),0,F("read Passive tag irq waiter re-enabeld"));
 		uint8_t pn532_packetbuffer[3];
 		pn532_packetbuffer[0] = PN532_COMMAND_INLISTPASSIVETARGET;
 		pn532_packetbuffer[1] = 1; // max 1 cards at once (we can set this to 2 later)
@@ -465,12 +466,12 @@ void loop(){
 	if (gpio_pushed & (1 << MCP_PIN_PLAY)) { // prev
 		if (state < STATE_UNKNOWN_CARD_MODE) {
 			if (gpio_state & (1 << MCP_PIN_BUSY)) {
-				Serial.println("Play");
+				debug_println("Play",0,"Play");
 				//delay(200);
 				mp3.start();
 				// hmm what about the device should be locked ?
 			} else {
-				Serial.println("Pause");
+				debug_println("Play",0,"Pause");
 				//delay(200);
 				mp3.pause();
 			}
@@ -503,12 +504,13 @@ void loop(){
 
 	// /////////// STATE_NEW_CARD //////////////////
 	if (state == STATE_NEW_CARD) {
+		publish_card(card_scanned);
 		card_found = cardList.is_uid_known(card_scanned->get_uuid(), card_scanned->get_uuidLength());
 		if (card_found != NULL) {
-			Serial.println(F("[card] known to the database"));
+			debug_println(("card"),0,F("known to the database"));
 			//////////////////////////////////// ADMIN CARD ////////////////////////////////////
 			if (card_found->get_mode() == MODE_ADMIN_CARD) {
-				Serial.print(F("[card] admin card found "));
+				debug_print(("card"),0,F("admin card found "));
 				// Max volume
 				if (card_found->get_folder() == ADMIN_CARD_MODE_MAX_VOLUME) {
 					mySettings.set_max_volume(card_found->get_track());
@@ -549,9 +551,9 @@ void loop(){
 			}
 			// PLAY CARD //
 		} else {
-			Serial.println(F("[card] is unknwon, start setup"));
+			debug_println(("card"),0,F("is unknwon, start setup"));
 			state = STATE_UNKNOWN_CARD_INTRO; // #State unknown card_found
-			Serial.println(F("[STATE] -> STATE_UNKNOWN_CARD_INTRO"));
+			debug_println(("STATE"),0,F("-> STATE_UNKNOWN_CARD_INTRO"));
 			if(card_found==NULL && card_found->is_temporary){
 				delete card_found;
 			}
@@ -568,18 +570,18 @@ void loop(){
 	else if (state == STATE_UNKNOWN_CARD_INTRO) {
 		mp3.playMp3FolderTrack(310);
 		state = STATE_UNKNOWN_CARD_MODE;
-		Serial.println(F("[STATE] -> STATE_UNKNOWN_CARD_MODE"));
+		debug_println(("STATE"),0,F("-> STATE_UNKNOWN_CARD_MODE"));
 	} else if (state == STATE_UNKNOWN_CARD_MODE)    {
 		if (voiceMenu(card_found->get_mode_p(), 6, 310, &mp3_voice_menu_status)) {
 			if (mp3_voice_menu_status == 3) { // play
 				if(card_found->get_mode()==MODE_ADMIN_CARD){
 					// admin menu
 					state = STATE_UNKNOWN_CARD_ADMIN_MODE;
-					Serial.println(F("[STATE] -> STATE_UNKNOWN_CARD_ADMIN_1"));
+					debug_println(("STATE"),0,F("-> STATE_UNKNOWN_CARD_ADMIN_1"));
 					mp3.playMp3FolderTrack(300); // TODO ??
 				} else {
 					state = STATE_UNKNOWN_CARD_FOLDER;
-					Serial.println(F("[STATE] -> STATE_UNKNOWN_CARD_FOLDER"));
+					debug_println(("STATE"),0,F("-> STATE_UNKNOWN_CARD_FOLDER"));
 					mp3.playMp3FolderTrack(300);
 				}
 			}
@@ -589,14 +591,14 @@ void loop(){
 			if (mp3_voice_menu_status == 3) { // play
 				if(card_found->get_folder() == ADMIN_CARD_MODE_MAX_VOLUME){
 					state = STATE_UNKNOWN_CARD_ADMIN_VALUE;
-					Serial.println(F("[STATE] -> STATE_UNKNOWN_CARD_ADMIN_VALUE"));
+					debug_println(("STATE"),0,F("-> STATE_UNKNOWN_CARD_ADMIN_VALUE"));
 					mp3.playMp3FolderTrack(300); // TODO "select value"
 				} else if(card_found->get_folder() == ADMIN_CARD_MODE_MAX_PLAYTIME){
 					state = STATE_UNKNOWN_CARD_ADMIN_VALUE;
-					Serial.println(F("[STATE] -> STATE_UNKNOWN_CARD_ADMIN_VALUE"));
+					debug_println(("STATE"),0,F("-> STATE_UNKNOWN_CARD_ADMIN_VALUE"));
 					mp3.playMp3FolderTrack(300); // TODO "select value"
 				} else {
-					Serial.println(F("[STATE] -> STATE_UNKNOWN_CARD_STORE"));
+					debug_println(("STATE"),0,F("-> STATE_UNKNOWN_CARD_STORE"));
 					state = STATE_UNKNOWN_CARD_STORE;
 				}
 			}
@@ -604,7 +606,7 @@ void loop(){
 	} else if (state == STATE_UNKNOWN_CARD_ADMIN_VALUE) {
 		if (voiceMenu(card_found->get_track_p(), 60, 0, &mp3_voice_menu_status)) { // 6 ? 0 is certainly wrong
 			if (mp3_voice_menu_status == 3) { // play
-				Serial.println(F("[STATE] -> STATE_UNKNOWN_CARD_STORE"));
+				debug_println(("STATE"),0,F("-> STATE_UNKNOWN_CARD_STORE"));
 				state = STATE_UNKNOWN_CARD_STORE;
 			}
 		}
@@ -613,16 +615,16 @@ void loop(){
 			if (mp3_voice_menu_status == 3) { // play
 				if (card_found->get_mode() == 4) { // we only have to ask for the track in mode 4
 					state = STATE_UNKNOWN_CARD_TRACK;
-					Serial.println(F("[STATE] -> STATE_UNKNOWN_CARD_TRACK, spiele 320"));
+					debug_println(("STATE"),0,F("-> STATE_UNKNOWN_CARD_TRACK, spiele 320"));
 					mp3.max_file_in_folder = mp3.getFolderTrackCount(card_found->get_folder());
 					mp3.playMp3FolderTrack(320);
 				} else {
 					state = STATE_UNKNOWN_CARD_STORE;
-					Serial.println(F("[STATE] -> STATE_UNKNOWN_CARD_STORE"));
+					debug_println(("STATE"),0,F("-> STATE_UNKNOWN_CARD_STORE"));
 				}
 			} else {
 				state = STATE_UNKNOWN_CARD_FOLDER_POST_1;
-				Serial.println(F("[STATE] -> STATE_UNKNOWN_CARD_TRACK_POST_1"));
+				debug_println(("STATE"),0,F("-> STATE_UNKNOWN_CARD_TRACK_POST_1"));
 			}
 		}
 	} else if (state == STATE_UNKNOWN_CARD_FOLDER_POST_1)    {
@@ -634,16 +636,16 @@ void loop(){
 			Serial.printf("Spiele folder %i und track %i", card_found->get_folder(), 1);
 			mp3.playFolderTrack(card_found->get_folder(), 1);
 			state = STATE_UNKNOWN_CARD_FOLDER;
-			Serial.println(F("[STATE] -> STATE_UNKNOWN_CARD_FOLDER"));
+			debug_println(("STATE"),0,F("-> STATE_UNKNOWN_CARD_FOLDER"));
 		}
 	} else if (state == STATE_UNKNOWN_CARD_TRACK)    {
 		if (voiceMenu(card_found->get_track_p(), mp3.max_file_in_folder, 0, &mp3_voice_menu_status)) {
 			if (mp3_voice_menu_status == 3) { // play
 				state = STATE_UNKNOWN_CARD_STORE;
-				Serial.println(F("[STATE] -> STATE_UNKNOWN_CARD_STORE"));
+				debug_println(("STATE"),0,F("-> STATE_UNKNOWN_CARD_STORE"));
 			} else { // up / down
 				state = STATE_UNKNOWN_CARD_TRACK_POST_1;
-				Serial.println(F("[STATE] -> STATE_UNKNOWN_CARD_TRACK_POST_1"));
+				debug_println(("STATE"),0,F("-> STATE_UNKNOWN_CARD_TRACK_POST_1"));
 				// we reach this only if up or down were pressed
 				// we could change into some sort of STATE_UNKNOWN_CARD_TRACK_POST_1 state
 				// STATE_UNKNOWN_CARD_TRACK_POST_1 would check the busy signal (should go high t play "eins" r whatever)
@@ -658,7 +660,7 @@ void loop(){
 			Serial.printf("Spiele folder %i und track %i", card_found->get_folder(), card_found->get_track());
 			mp3.playFolderTrack(card_found->get_folder(), card_found->get_track());
 			state = STATE_UNKNOWN_CARD_TRACK;
-			Serial.println(F("[STATE] -> STATE_UNKNOWN_CARD_TRACK"));
+			debug_println(("STATE"),0,F("-> STATE_UNKNOWN_CARD_TRACK"));
 		}
 	} else if (state == STATE_UNKNOWN_CARD_STORE)    {
 		cardList.add_uid(card_found);
@@ -672,7 +674,7 @@ void loop(){
 			mp3.playMp3FolderTrack(401); // FAIL
 		}
 		state = STATE_IDLE; // or STATE_UNKNOWN_CARD_STORE_POST_1 wait for high, wait for low and play?
-		Serial.println(F("[STATE] -> STATE_IDLE"));
+		debug_println(("STATE"),0,F("-> STATE_IDLE"));
 		delay(200);
 	}
 	// //////////// setup card ///////////////
