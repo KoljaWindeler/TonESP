@@ -223,7 +223,7 @@ bool list::load(){
 
 			debug_printf("card",COLOR_YELLOW,"(%i) Mode: %i, Folder: %02i, Track: %03i, UUID: ", cards_loaded, e->get_mode(), e->get_folder(), e->get_track());
 			for(uint i=0; i<10; i++){
-				Serial.printf("%02x",temp[i]);
+				Serial.printf("%02X",temp[i]);
 			}
 			Serial.println("");
 			add_uid(e);
@@ -281,14 +281,14 @@ listElement* list::is_uid_known(byte* uid, uint8_t size){
 }
 
 bool list::remove_uid(listElement* element){
-	DMSG_F("Trying to delete card %i\r\n",element);
+	//DMSG_F("Trying to delete card %i\r\n",element);
 	if(first==NULL){
-		DMSG_LN("card list empty, exiting");
+		//DMSG_LN("card list empty, exiting");
 		return false;
 	}
 	listElement* e;
 	if(first==element){
-		DMSG_LN("matches first, deleting");
+		//DMSG_LN("matches first, deleting");
 		e=first->get_next();
 		delete first;
 		first = e;
@@ -296,13 +296,13 @@ bool list::remove_uid(listElement* element){
 	}
 	listElement* last = first;
 	while(last!=NULL){
-		DMSG_F("loading card adr %i ",last);
-		DMSG_F("next card is %i ",last->get_next());
+		//DMSG_F("loading card adr %i ",last);
+		//DMSG_F("next card is %i ",last->get_next());
 		if(last->get_next() == element){
 			e = last->get_next()->get_next();
 			delete last->get_next();
 			last->set_next(e);
-			DMSG_F("\r\ngetting next next %i and store it as next of %i\r\n",e,last);
+			//DMSG_F("\r\ngetting next next %i and store it as next of %i\r\n",e,last);
 			return true;
 		} else {
 			last = last->get_next();
