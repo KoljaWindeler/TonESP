@@ -450,18 +450,22 @@ void loop(){
 
 	// /// pushing buttons /////
 	if (gpio_pushed & (1 << MCP_PIN_RIGHT)) { // next
-		Serial.println("Next Track");
-		//delay(200);
-		play(PLAY_TYP_NEXT);
-		Serial.println("Done");
-		//delay(200);
+		if (state < STATE_UNKNOWN_CARD_MODE) {
+			Serial.println("Next Track");
+			//delay(200);
+			play(PLAY_TYP_NEXT);
+			Serial.println("Done");
+			//delay(200);
+		}
 	}
 	if (gpio_pushed & (1 << MCP_PIN_LEFT)) { // prev
-		Serial.println("Prev Track");
-		//delay(200);
-		play(PLAY_TYP_PREV);
-		Serial.println("Done");
-		//delay(200);
+		if (state < STATE_UNKNOWN_CARD_MODE) {
+			Serial.println("Prev Track");
+			//delay(200);
+			play(PLAY_TYP_PREV);
+			Serial.println("Done");
+			//delay(200);
+		}
 	}
 	if (gpio_pushed & (1 << MCP_PIN_PLAY)) { // prev
 		if (state < STATE_UNKNOWN_CARD_MODE) {
