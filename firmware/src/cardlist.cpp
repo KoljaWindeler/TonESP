@@ -221,7 +221,7 @@ bool list::load(){
 			e->set_folder(temp[11]);
 			e->set_track(temp[12]);
 
-			debug_printf("card",COLOR_YELLOW,"(%i) Mode: %i, Folder: %02i, Track: %03i, UUID: ", cards_loaded, e->get_mode(), e->get_folder(), e->get_track());
+			debug_printf("card",COLOR_YELLOW,"(%03i) Mode: %i, Folder: %02i, Track: %03i, UUID: ", cards_loaded, e->get_mode(), e->get_folder(), e->get_track());
 			for(uint i=0; i<10; i++){
 				Serial.printf("%02X",temp[i]);
 			}
