@@ -289,7 +289,7 @@ bool wifi_connected(){
 			if(client.connect("TonESP1", "ha", "ah")){
 				//if(client.connect("TonESP1", "ha", "ah", "TonESP1/INFO", 0, true, "lost signal")){
 				debug_println("MQTT",COLOR_GREEN,"connected");
-				if(!(gpio_state&(1<<MCP_PIN_BUSY))){
+				if((gpio_state&(1<<MCP_PIN_BUSY))){ // active high, play only if nothing else is on
 					mp3.playMp3FolderTrack(969);
 				}
 				wifi_status = WIFI_STATE_CONNECTED;
@@ -309,7 +309,7 @@ bool wifi_connected(){
 	} else {
 		if(wifi_status>WIFI_STATE_CONNECTING){
 			wifi_status=WIFI_STATE_DISCONNECTED;
-			if(!(gpio_state&(1<<MCP_PIN_BUSY))){
+			if((gpio_state&(1<<MCP_PIN_BUSY))){ // active how
 				mp3.playMp3FolderTrack(970);
 			}
 		}
