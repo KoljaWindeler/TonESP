@@ -621,15 +621,16 @@ void loop(){
 			} else {
 				state = STATE_UNKNOWN_CARD_FOLDER_POST_1;
 				debug_println(("STATE"),COLOR_YELLOW,F("-> STATE_UNKNOWN_CARD_TRACK_POST_1"));
+				delay(400); // needed, mp3 player command needs time to receive cmd.
+				// before this the busy pin isn't up, so the pushed is over
 			}
 		}
 	} else if (state == STATE_UNKNOWN_CARD_FOLDER_POST_1)    {
 		// at this point we're waiting for the player to finish playing the "four" or whatever number we're in
 		// player is low while playing
 		if (gpio_pushed & (1 << MCP_PIN_BUSY)) {
-			delay(1000); // / grrr TODO sonst wird das "eins" nicht gespielt, wahrschienlch kann man auch ein kleineres delay vor dem post status setzen nutzen?
 			// -> low -> high transistion
-			Serial.printf("Spiele folder %i und track %i", card_found->get_folder(), 1);
+			//Serial.printf("Spiele folder %i und track %i", card_found->get_folder(), 1);
 			mp3.playFolderTrack(card_found->get_folder(), 1);
 			state = STATE_UNKNOWN_CARD_FOLDER;
 			debug_println(("STATE"),COLOR_YELLOW,F("-> STATE_UNKNOWN_CARD_FOLDER"));
@@ -642,6 +643,7 @@ void loop(){
 			} else { // up / down
 				state = STATE_UNKNOWN_CARD_TRACK_POST_1;
 				debug_println(("STATE"),COLOR_YELLOW,F("-> STATE_UNKNOWN_CARD_TRACK_POST_1"));
+				delay(400);
 				// we reach this only if up or down were pressed
 				// we could change into some sort of STATE_UNKNOWN_CARD_TRACK_POST_1 state
 				// STATE_UNKNOWN_CARD_TRACK_POST_1 would check the busy signal (should go high t play "eins" r whatever)
@@ -651,9 +653,8 @@ void loop(){
 		// at this point we're waiting for the player to finish playing the "four" or whatever number we're in
 		// player is low while playing
 		if (gpio_pushed & (1 << MCP_PIN_BUSY)) {
-			delay(1000); // / grrr TODO sonst wird das "eins" nicht gespielt
 			// -> low -> high transistion
-			Serial.printf("Spiele folder %i und track %i", card_found->get_folder(), card_found->get_track());
+			//Serial.printf("Spiele folder %i und track %i", card_found->get_folder(), card_found->get_track());
 			mp3.playFolderTrack(card_found->get_folder(), card_found->get_track());
 			state = STATE_UNKNOWN_CARD_TRACK;
 			debug_println(("STATE"),COLOR_YELLOW,F("-> STATE_UNKNOWN_CARD_TRACK"));
