@@ -15,6 +15,10 @@
 #define ACTION_FORMAT 		3
 #define ACTION_EMULATE 		4
 
+#define WIFI_STATE_DISCONNECTED 0
+#define WIFI_STATE_CONNECTING 	1
+#define WIFI_STATE_CONNECTED 		2
+
 #define MSG_BUFFER_SIZE          60   // mqtt messages max char size
 #define TOPIC_BUFFER_SIZE        64   // mqtt topic buffer
 #define PUBLISH_TIME_OFFSET      200  // ms timeout between two publishes

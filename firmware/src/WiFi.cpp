@@ -3,7 +3,7 @@
 
 
 const int maxSize=20;
-uint8_t wifi_status=0;
+uint8_t wifi_status=WIFI_STATE_DISCONNECTED;
 char wifi_config[6][maxSize];
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -148,19 +148,25 @@ void callback(char * p_topic, byte * p_payload, uint16_t p_length){
 				else if(section==4){
 					card_scanned->set_track(t);
 
-					// find card
-					card_found = cardList.is_uid_known(card_scanned->get_uuid(), card_scanned->get_uuidLength());
-					t=0;
-					if (card_found != NULL) {
-						Serial.println(F("[Card] known to the database"));
-						t=1;
-					} else {
-						Serial.println(F("[Card] is unknown, creating temporary"));
-						card_found = new listElement(card_scanned->get_uuid(), card_scanned->get_uuidLength()); // create empty card_found
+					// find card, only needed for create and deleted
+					// not needed for format or emulate
+					if(action==ACTION_CREATE || action==ACTION_DELETE){
+						card_found = cardList.is_uid_known(card_scanned->get_uuid(), card_scanned->get_uuidLength());
+						t=0;
+						if (card_found != NULL) {
+							debug_println("Card",COLOR_GREEN,F("known to the database"));
+							t=1;
+						} else {
+							debug_println("Card",COLOR_GREEN,F("is unknown, creating temporary"));
+							card_found = new listElement(card_scanned->get_uuid(), card_scanned->get_uuidLength()); // create empty card_found
+						}
 					}
 
 					// ACTION 1 = Add/Change card
 					if(action==ACTION_CREATE){
+						//char buffer[50];
+						//card_scanned->dump_ascii((uint8_t*)buffer);
+						//Serial.println(buffer);
 						card_found->set_mode(card_scanned->get_mode());
 						card_found->set_folder(card_scanned->get_folder());
 						card_found->set_track(card_scanned->get_track());
@@ -178,7 +184,7 @@ void callback(char * p_topic, byte * p_payload, uint16_t p_length){
 					// ACTION 2 = Remove card
 					else if(action==ACTION_DELETE){
 						if(t){ // card was known to the database
-							Serial.println(F("[Card] deleting card"));
+							debug_println("Card",COLOR_GREEN,F("deleting card"));
 							cardList.remove_uid(card_found);
 							cardList.store();
 							cardList.load();
@@ -204,14 +210,8 @@ void callback(char * p_topic, byte * p_payload, uint16_t p_length){
 					}
 					// ACTION 4 = emulate card
 					else if(action==ACTION_EMULATE){
-						if(t){ // card was known to the database
-							Serial.println(F("[Card] emulating card"));
-							state = STATE_NEW_CARD;
-						} else {
-							Serial.println(F("wrong key, stopping"));
-							delete card_found;
-							card_found = NULL;
-						}
+						debug_println("Card",COLOR_GREEN,F("emulating cards"));
+						state = STATE_NEW_CARD;
 					}
 					return;
 				}
@@ -235,7 +235,7 @@ void wifi_setup(){
 }
 
 bool wifi_scan_connect(){
-	if(!wifi_connected() && (wifi_status != 1 || (millis()-wifi_last_connect>30000))){
+	if(!wifi_connected() && (wifi_status != WIFI_STATE_CONNECTING || (millis()-wifi_last_connect>30000))){
 		//Serial.printf("wifi_status %i\r\n",wifi_status);
 		WiFi.mode(WIFI_STA);
 		int n = WiFi.scanNetworks();
@@ -264,7 +264,7 @@ bool wifi_scan_connect(){
 			delay(1);
 			WiFi.begin(wifi_config[best*2],wifi_config[best*2+1]);
 			wifi_last_connect = millis();
-			wifi_status = 1; // connecting
+			wifi_status = WIFI_STATE_CONNECTING; // connecting
 			if(0){
 				while (WiFi.status() != WL_CONNECTED)
 				{
@@ -282,14 +282,17 @@ bool wifi_scan_connect(){
 
 bool wifi_connected(){
 	if(WiFi.status() == WL_CONNECTED){
-		if(wifi_status==0 || !client.connected()){
+		if(wifi_status==WIFI_STATE_DISCONNECTED || !client.connected()){
 			client.setServer(IPAddress(192,168,2,84), 1883);
 			client.setCallback(callback); // in main.cpp
 			//Serial.println(WiFi.localIP());
 			if(client.connect("TonESP1", "ha", "ah")){
 				//if(client.connect("TonESP1", "ha", "ah", "TonESP1/INFO", 0, true, "lost signal")){
 				debug_println("MQTT",COLOR_GREEN,"connected");
-				wifi_status = 2;
+				if(!(gpio_state&(1<<MCP_PIN_BUSY))){
+					mp3.playMp3FolderTrack(969);
+				}
+				wifi_status = WIFI_STATE_CONNECTED;
 
 				client.subscribe(build_topic("ctrl", PC_TO_UNIT)); // MQTT_TRACE_TOPIC topic
 				for (uint8_t i; i < 10; i++) {
@@ -304,6 +307,12 @@ bool wifi_connected(){
 		client.loop();
 		return true;
 	} else {
+		if(wifi_status>WIFI_STATE_CONNECTING){
+			wifi_status=WIFI_STATE_DISCONNECTED;
+			if(!(gpio_state&(1<<MCP_PIN_BUSY))){
+				mp3.playMp3FolderTrack(970);
+			}
+		}
 		return false;
 	}
 }
