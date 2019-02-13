@@ -149,7 +149,7 @@ extern DFMiniMp3 mp3;
 extern PubSubClient client;
 extern uint8_t uid[10];
 extern uint8_t state;
-
+extern uint8_t gpio_state;
 extern bool publish_card(listElement* e);
 
 #endif
