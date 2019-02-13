@@ -47,13 +47,13 @@ void callback(char * p_topic, byte * p_payload, uint16_t p_length){
 				mp3.pause();
 			}
 		}
-		else if(strcmp((const char*)p_payload, (const char*)"next")==0){
+		else if(!strcmp((const char*)p_payload, (const char*)"next")){
 			play(PLAY_TYP_NEXT);
 		}
-		else if(strcmp((const char*)p_payload, (const char*)"prev")==0){
+		else if(!strcmp((const char*)p_payload, (const char*)"prev")){
 			play(PLAY_TYP_PREV);
 		}
-		else if(strcmp((const char*)p_payload, (const char*)"backup")==0){
+		else if(!strcmp((const char*)p_payload, (const char*)"backup")){
 			// reuse card scanned, so we can keep card_found as is
 			uint16_t ii=0;
 			card_scanned = cardList.get_element_nr(ii);
@@ -62,6 +62,20 @@ void callback(char * p_topic, byte * p_payload, uint16_t p_length){
 				publish_card(card_scanned);
 				ii++;
 				card_scanned = cardList.get_element_nr(ii);
+			}
+		}
+		// wifi update
+		else if (!strncmp((const char *) p_payload, "http", 4)) { // update
+			ESPhttpUpdate.rebootOnUpdate(false);
+			HTTPUpdateResult res = ESPhttpUpdate.update(p_payload);
+			if (res == HTTP_UPDATE_OK) {
+				client.publish(build_topic("out", UNIT_TO_PC), (char *) "rebooting...");
+				debug_println("Wifi",COLOR_GREEN,"Update ok, reboot");
+				delay(200);
+				ESP.restart();
+			}
+			else {
+				debug_println("Wifi",COLOR_RED,"Update failed");
 			}
 		}
 	}
@@ -244,7 +258,7 @@ bool wifi_scan_connect(){
 					}
 				}
 			}
-			debug_printf("Wifi",0,"Connect to %s -> %s\r\n",wifi_config[best*2],wifi_config[best*2+1]);
+			debug_printf("Wifi",COLOR_YELLOW,"Connect to %s -> %s\r\n",wifi_config[best*2],wifi_config[best*2+1]);
 			WiFi.mode(WIFI_STA);
 			WiFi.disconnect();
 			delay(1);
@@ -274,7 +288,7 @@ bool wifi_connected(){
 			//Serial.println(WiFi.localIP());
 			if(client.connect("TonESP1", "ha", "ah")){
 				//if(client.connect("TonESP1", "ha", "ah", "TonESP1/INFO", 0, true, "lost signal")){
-				debug_println("MQTT",0,"connected");
+				debug_println("MQTT",COLOR_GREEN,"connected");
 				wifi_status = 2;
 
 				client.subscribe(build_topic("ctrl", PC_TO_UNIT)); // MQTT_TRACE_TOPIC topic
@@ -285,14 +299,6 @@ bool wifi_connected(){
 				for (uint8_t i; i < 10; i++) {
 					client.loop();
 				}
-
-				if(client.publish(build_topic("out", UNIT_TO_PC),"test22")){
-					debug_println("MQTT",0,"Published");
-				} // MQTT_TRACE_TOPIC topic
-				else {
-					debug_println("MQTT",0,"Publish failed");
-				}
-				client.loop();
 			}
 		}
 		client.loop();

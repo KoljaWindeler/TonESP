@@ -196,7 +196,7 @@ void list::clear(){
 			e->set_next(NULL);
 		}
 	}
-	debug_printf("card", 0, " %i cards deleted from RAM\r\n",ii);
+	debug_printf("card", COLOR_GREEN, "%i cards deleted from RAM\r\n",ii);
 }
 
 // load cards from SPIFFS
@@ -204,7 +204,7 @@ bool list::load(){
 	uint16_t cards_loaded=0;
 	clear();
 
-	debug_println(("card"),0,F("loading /cards.txt"));
+	debug_println(("card"),COLOR_GREEN,F("loading /cards.txt"));
 	if(SPIFFS.exists("/cards.txt")){
 		//Serial.println("File existed");
 		File f = SPIFFS.open("/cards.txt", "r");
@@ -221,7 +221,7 @@ bool list::load(){
 			e->set_folder(temp[11]);
 			e->set_track(temp[12]);
 
-			debug_printf("card",0,"(%i) Mode: %i, Folder: %02i, Track: %03i, UUID: ", cards_loaded, e->get_mode(), e->get_folder(), e->get_track());
+			debug_printf("card",COLOR_YELLOW,"(%i) Mode: %i, Folder: %02i, Track: %03i, UUID: ", cards_loaded, e->get_mode(), e->get_folder(), e->get_track());
 			for(uint i=0; i<10; i++){
 				Serial.printf("%02x",temp[i]);
 			}
@@ -229,7 +229,7 @@ bool list::load(){
 			add_uid(e);
 		}
 		f.close();
-		debug_printf("card",0,"%i cards loaded to RAM\r\n",cards_loaded);
+		debug_printf("card",COLOR_GREEN,"%i cards loaded to RAM\r\n",cards_loaded);
 		delay(200);
 	}
 	return true;

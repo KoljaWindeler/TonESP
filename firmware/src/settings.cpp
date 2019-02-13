@@ -38,9 +38,9 @@ bool settings::load(){
 
 void settings::print_settings(){
 	Serial.println(F("==== Settings ======="));
-	debug_printf("set",0,"Max Volume %i\r\n",m_max_volume);
-	debug_printf("set",0,"Current volume %i\r\n",m_current_volume);
-	debug_printf("set",0,"lock %i\r\n",m_locked);
+	debug_printf("set",COLOR_YELLOW,"Max Volume %i\r\n",m_max_volume);
+	debug_printf("set",COLOR_YELLOW,"Current volume %i\r\n",m_current_volume);
+	debug_printf("set",COLOR_YELLOW,"lock %i\r\n",m_locked);
 	Serial.println(F("==== Settings End ==="));
 }
 

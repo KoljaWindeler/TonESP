@@ -69,6 +69,12 @@
 #define ADMIN_CARD_MODE_SHUTDOWN_AFTER_TRACK 	4
 
 
+#define COLOR_NONE            0
+#define COLOR_RED             1
+#define COLOR_GREEN           2
+#define COLOR_YELLOW          3
+#define COLOR_PURPLE          4
+
 #define DEBUG_PRINT(str) \
    Serial.print(millis()); \
    Serial.print(": "); \
@@ -82,18 +88,55 @@
 
 #define debug_printf(c,i,args...) \
 	Serial.printf("%02i:%02i:%02i ",((millis()/1000UL)%86400)/3600 ,((millis()/1000UL)%3600)/60 ,(millis()/1000UL)%60); \
+	if(i==COLOR_RED){\
+		Serial.print("\033[0;31m");\
+	} else if(i==COLOR_GREEN){\
+		Serial.print("\033[0;32m");\
+	} else if(i==COLOR_YELLOW){\
+		Serial.print("\033[0;33m");\
+	} else if(i==COLOR_PURPLE){\
+		Serial.print("\033[0;35m");\
+	}\
 	Serial.printf("[%-8s] ",c); \
-	Serial.printf(args);
+	Serial.printf(args);\
+	if(i!=COLOR_NONE){\
+		Serial.print("\033[0m");\
+	}\
 
 #define debug_print(c,i,args...) \
-		Serial.printf("%02i:%02i:%02i ",((millis()/1000UL)%86400)/3600 ,((millis()/1000UL)%3600)/60 ,(millis()/1000UL)%60); \
-		Serial.printf("[%-8s] ",c); \
-		Serial.print(args);
+	Serial.printf("%02i:%02i:%02i ",((millis()/1000UL)%86400)/3600 ,((millis()/1000UL)%3600)/60 ,(millis()/1000UL)%60); \
+	if(i==COLOR_RED){\
+		Serial.print("\033[0;31m");\
+	} else if(i==COLOR_GREEN){\
+		Serial.print("\033[0;32m");\
+	} else if(i==COLOR_YELLOW){\
+		Serial.print("\033[0;33m");\
+	} else if(i==COLOR_PURPLE){\
+		Serial.print("\033[0;35m");\
+	}\
+	Serial.printf("[%-8s] ",c); \
+	Serial.print(args);\
+	if(i!=COLOR_NONE){\
+		Serial.print("\033[0m");\
+	}\
 
 #define debug_println(c,i,args...) \
 	Serial.printf("%02i:%02i:%02i ",((millis()/1000UL)%86400)/3600 ,((millis()/1000UL)%3600)/60 ,(millis()/1000UL)%60); \
+	if(i==COLOR_RED){\
+		Serial.print("\033[0;31m");\
+	} else if(i==COLOR_GREEN){\
+		Serial.print("\033[0;32m");\
+	} else if(i==COLOR_YELLOW){\
+		Serial.print("\033[0;33m");\
+	} else if(i==COLOR_PURPLE){\
+		Serial.print("\033[0;35m");\
+	}\
 	Serial.printf("[%-8s] ",c); \
-	Serial.println(args);
+	Serial.println(args);\
+	if(i!=COLOR_NONE){\
+		Serial.print("\033[0m");\
+	}\
+
 
 extern uint8_t gpio_state;
 extern PN532_I2C pn532i2c;

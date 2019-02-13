@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include "../lib/PubSubClient/src/PubSubClient.h"
 #include <ESP8266WiFi.h>
+#include <ESP8266httpUpdate.h>
 
 
 #define UNIT_TO_PC 'r'
