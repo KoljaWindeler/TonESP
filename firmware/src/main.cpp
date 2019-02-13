@@ -89,6 +89,10 @@ void powerDown(const __FlashStringHelper * log){
 
 // either the "next" track was pushed or the last track was over
 void play(uint8_t typ){
+	if(mySettings.m_locked){
+		debug_println(("Play"),COLOR_RED,F("Play avoided, player in lock_mode"));
+		return;
+	}
 	//// track error handling ////
 	if (card_found == NULL){
 		debug_println(("Play"),COLOR_RED,F("Track avoided card_found == NULL"));
@@ -461,15 +465,19 @@ void loop(){
 	}
 	if (gpio_pushed & (1 << MCP_PIN_PLAY)) { // prev
 		if (state < STATE_UNKNOWN_CARD_MODE) {
-			if (gpio_state & (1 << MCP_PIN_BUSY)) {
-				debug_println("Play",COLOR_PURPLE,"Play");
-				//delay(200);
-				mp3.start();
-				// hmm what about the device should be locked ?
+			if(mySettings.m_locked){
+				debug_println(("Play"),COLOR_RED,F("Play avoided, player in lock_mode"));
 			} else {
-				debug_println("Play",COLOR_PURPLE,"Pause");
-				//delay(200);
-				mp3.pause();
+				if (gpio_state & (1 << MCP_PIN_BUSY)) {
+					debug_println("Play",COLOR_PURPLE,"Play");
+					//delay(200);
+					mp3.start();
+					// hmm what about the device should be locked ?
+				} else {
+					debug_println("Play",COLOR_PURPLE,"Pause");
+					//delay(200);
+					mp3.pause();
+				}
 			}
 		}
 	}
@@ -522,6 +530,10 @@ void loop(){
 						Serial.println(F("Device locked"));
 					}
 					mySettings.store();
+					// card consumed
+					//delete card_found; -> don't delete, it is a known card
+					//card_found=NULL;
+					state = STATE_IDLE;
 				}
 				// Max playtime
 				else if (card_found->get_folder() == ADMIN_CARD_MODE_MAX_PLAYTIME) {
@@ -542,7 +554,9 @@ void loop(){
 					play(PLAY_TYP_FIRST);
 					state = STATE_REGULAR_PLAYBACK; // #State regular playing
 				} else {
-					Serial.println(F("Device in lock mode, not playing"));
+					debug_println(("play"),COLOR_RED,F("Device in lock mode, not playing"));
+					// card consumed
+					state = STATE_IDLE;
 				}
 			}
 			// PLAY CARD //
