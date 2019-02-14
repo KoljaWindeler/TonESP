@@ -237,7 +237,7 @@ void setup(){
 	card_found = cardList.is_uid_known(uid, 10); // search for emulated startup card
 	//Serial.printf("card_scanned lieg bei adresse %i\r\n",card_scanned);
 	//debug_printf("card_scanned lieg bei adresse %i\r\n",card_scanned);
-	if(card_scanned != NULL){
+	if(card_found != NULL){
 		// startup card found, play
 		debug_println(("card"),COLOR_GREEN,F("Startup card found"));
 		state = STATE_NEW_CARD;
@@ -275,7 +275,7 @@ void setup(){
 		debug_println(("mcp"),COLOR_GREEN,"found");
 		attachInterrupt(MCP_IRQ_PIN, mcp_irq_callback, FALLING);
 		mcp.setupInterrupts(true, false, LOW);
-		for (uint8_t p = 0; p < 8; p++) {
+		for (uint8_t p = 0; p < 7; p++) {
 			mcp.pinMode(p, INPUT);
 			mcp.pullUp(p, HIGH); // turn on a 100K pullup internally
 			mcp.setupInterruptPin(p, CHANGE);
@@ -512,9 +512,9 @@ void loop(){
 
 	// /////////// STATE_NEW_CARD //////////////////
 	if (state == STATE_NEW_CARD) {
-		publish_card(card_scanned);
 		card_found = cardList.is_uid_known(card_scanned->get_uuid(), card_scanned->get_uuidLength());
 		if (card_found != NULL) {
+			publish_card(card_found);
 			debug_println(("card"),COLOR_GREEN,F("known to the database"));
 			//////////////////////////////////// ADMIN CARD ////////////////////////////////////
 			if (card_found->get_mode() == MODE_ADMIN_CARD) {
@@ -572,6 +572,7 @@ void loop(){
 				delete card_found;
 			}
 			card_found = new listElement(card_scanned->get_uuid(), card_scanned->get_uuidLength()); // create empty card_found
+			publish_card(card_found);
 		}
 	}
 	// /////////// STATE_NEW_CARD //////////////////
