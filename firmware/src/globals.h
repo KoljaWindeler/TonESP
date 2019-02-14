@@ -33,10 +33,10 @@
 #define MCP_PIN_RIGHT         3	// low active
 #define MCP_PIN_PLAY          4	// low active
 #define MCP_PIN_BUSY          5 // low = playing
-#define MCP_PIN_PN532_IRQ   6
+#define MCP_PIN_PN532_IRQ   	6
 // port B - outputs
-#define MCP_PIN_PN532_RESET 7
-#define MCP_PIN_POWER_SWITCH  8
+#define MCP_PIN_PN532_RESET 	8
+#define MCP_PIN_POWER_SWITCH  9
 
 #define STATE_IDLE												0
 #define STATE_NEW_CARD 										1
