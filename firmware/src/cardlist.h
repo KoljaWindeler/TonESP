@@ -13,6 +13,7 @@ class listElement {
 		listElement* get_next();
 		bool compare_uid(byte* uid, uint8_t size);
 		byte* get_uuid();
+		byte* get_userdata();
 		uint8_t get_uuidLength();
 		uint8_t get_mode();
 		uint8_t get_folder();
@@ -24,11 +25,13 @@ class listElement {
 		void set_folder(uint8_t folder);
 		void set_track(uint8_t track);
 		void set_uuid(byte* uid, uint8_t size);
+		void set_userdata(byte* data);
 		void set_next(listElement* element);
 		void dump_ascii(uint8_t* a);
 		uint8_t is_temporary;
 	private:
 		byte		m_uidByte[10];
+		byte		m_userdata[10];
 		uint8_t	m_uidByteLength;
 		listElement* m_next;
 		uint8_t m_folder;

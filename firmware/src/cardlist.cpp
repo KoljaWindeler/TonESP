@@ -11,6 +11,7 @@ listElement::listElement(byte* uid, uint8_t size){
 	m_track=0;
 	m_mode=0;
 	is_temporary=1;
+	memset(m_userdata,0x00,10);
 };
 
 listElement::~listElement(){};
@@ -24,8 +25,17 @@ void listElement::set_uuid(byte* uid, uint8_t size){
 	//Serial.printf("copied %i uuid bytes",size);
 }
 
+void listElement::set_userdata(byte* data){
+	memcpy(m_userdata,data,10); // 10 is fixed length
+	//Serial.printf("copied %i uuid bytes",size);
+}
+
 byte* listElement::get_uuid(){
 	return m_uidByte;
+}
+
+byte* listElement::get_userdata(){
+	return m_userdata;
 }
 
 void listElement::dump_ascii(uint8_t* a){
@@ -33,9 +43,13 @@ void listElement::dump_ascii(uint8_t* a){
 		sprintf((char*)a,"%02X",m_uidByte[i]);
 		a+=2;
 	}
-	sprintf((char*)a,",%i,%i,%i",m_mode%100, m_folder%100, m_track%1000);
+	a+=sprintf((char*)a,",%02i,%02i,%03i,",m_mode%100, m_folder%100, m_track%1000);
+	for(uint8_t i=0;i<10;i++){
+		sprintf((char*)a,"%02X",m_userdata[i]);
+		a+=2;
+	}
 	// just to make sure that we limit amount of chars
-	// 20+1+2+1+2+1+3+1 = 31
+	// 20+1+2+1+2+1+3+1+20 = 51
 }
 
 uint8_t listElement::get_uuidLength(){
@@ -136,7 +150,7 @@ bool list::store(){
     debug_println(("card"),0,F("file open failed"));
 	} else {
 		listElement* e = first;
-		uint8_t temp[13];
+		uint8_t temp[23];
 		uint8_t* a;
 		while(e!=NULL){
 			a = e->get_uuid();
@@ -147,11 +161,16 @@ bool list::store(){
 			temp[10]=e->get_mode();
 			temp[11]=e->get_folder();
 			temp[12]=e->get_track();
+			a = e->get_userdata(); // 10 byte fixed
+			for(uint8_t ii=13;ii<23;ii++){
+				temp[ii]=*a;
+				a++;
+			}
 
-			//Serial.println("Storing 13 bytes");
+			//Serial.println("Storing 23 bytes");
 			//delay(200);
-			f.write(temp, 13);
-			//for(uint i=0; i<13; i++){
+			f.write(temp, 23);
+			//for(uint i=0; i<23; i++){
 			//	Serial.printf("%02x ",temp[i]);
 			//}
 			//Serial.printf("Mode: %i, Folder: %02i, Track: %03i\r\n",e->get_mode(), e->get_folder(), e->get_track());
@@ -208,21 +227,26 @@ bool list::load(){
 	if(SPIFFS.exists("/cards.txt")){
 		//Serial.println("File existed");
 		File f = SPIFFS.open("/cards.txt", "r");
-		byte temp[13];
-		while(f.available()>=13){
+		byte temp[23];
+		while(f.available()>=23){
 			cards_loaded++;
-			//Serial.println("Reading 13 bytes");
+			//Serial.println("Reading 23 bytes");
 			//delay(200);
-			f.read(temp, 13);
+			f.read(temp, 23);
 			listElement* e = new listElement(temp,10);
 			//Serial.println("set mode");
 			//delay(200);
 			e->set_mode(temp[10]);
 			e->set_folder(temp[11]);
 			e->set_track(temp[12]);
+			e->set_userdata(&temp[13]);
 
 			debug_printf("card",COLOR_YELLOW,"(%03i) Mode: %i, Folder: %02i, Track: %03i, UUID: ", cards_loaded, e->get_mode(), e->get_folder(), e->get_track());
 			for(uint i=0; i<10; i++){
+				Serial.printf("%02X",temp[i]);
+			}
+			Serial.print(", Userdata: ");
+			for(uint i=13; i<23; i++){
 				Serial.printf("%02X",temp[i]);
 			}
 			Serial.println("");
