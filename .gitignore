@@ -3,6 +3,9 @@
 .piolibdeps
 .clang_complete
 .gcc-flags.json
-SD-Karte/
-!SD-Karte/advert/
-!SD-Karte/mp3/
+
+SD-Karte/01/
+SD-Karte/02/
+SD-Karte/03/
+
+mqtt.sh
