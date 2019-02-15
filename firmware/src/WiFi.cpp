@@ -267,12 +267,12 @@ void callback(char * p_topic, byte * p_payload, uint16_t p_length){
 void wifi_setup(){
 	// WiFi.disconnect();
 	// WiFi.mode(WIFI_STA);
-	sprintf(wifi_config[0], "IOT255");
-	sprintf(wifi_config[1], "windycarrot475");
-	sprintf(wifi_config[2], "IOT0");
-	sprintf(wifi_config[3], "windycarrot475");
-	sprintf(wifi_config[4], "IOT1");
-	sprintf(wifi_config[5], "windycarrot475");
+	sprintf(wifi_config[0], WIFI_SSID_1);
+	sprintf(wifi_config[1], WIFI_PW_1);
+	sprintf(wifi_config[2], WIFI_SSID_2);
+	sprintf(wifi_config[3], WIFI_PW_2);
+	sprintf(wifi_config[4], WIFI_SSID_3);
+	sprintf(wifi_config[5], WIFI_PW_3);
 	// delay(100);
 }
 
@@ -324,10 +324,10 @@ bool wifi_scan_connect(){
 bool wifi_connected(){
 	if (WiFi.status() == WL_CONNECTED) {
 		if (wifi_status == WIFI_STATE_DISCONNECTED || !client.connected()) {
-			client.setServer(IPAddress(192, 168, 2, 84), 1883);
+			client.setServer(IPAddress(MQTT_SERVER_IP), MQTT_SERVER_PORT);
 			client.setCallback(callback); // in main.cpp
 			// Serial.println(WiFi.localIP());
-			if (client.connect("TonESP1", "ha", "ah")) {
+			if (client.connect("TonESP1", MQTT_LOGIN, MQTT_PW)) {
 				// if(client.connect("TonESP1", "ha", "ah", "TonESP1/INFO", 0, true, "lost signal")){
 				debug_println("MQTT", COLOR_GREEN, "connected");
 				if ((gpio_state & (1 << MCP_PIN_BUSY)) && !mySettings.m_locked) { // active high, play only if nothing else is on

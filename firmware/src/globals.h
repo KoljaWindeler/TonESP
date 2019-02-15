@@ -5,6 +5,7 @@
 #include "../lib/dfminimp3/DFMiniMp3.h"
 #include "cardlist.h"
 #include "settings.h"
+#include "credentials.h"
 #include <PN532_I2C.h>
 #include <PN532.h>
 #include <NfcAdapter.h>
