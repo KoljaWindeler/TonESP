@@ -38,42 +38,45 @@
 #define MCP_PIN_PN532_RESET 	8
 #define MCP_PIN_POWER_SWITCH  9
 
-#define STATE_IDLE												0
-#define STATE_NEW_CARD 										1
-#define STATE_REGULAR_PLAYBACK 						2
-#define STATE_UNKNOWN_CARD_INTRO 					3
-#define STATE_UNKNOWN_CARD_MODE						100
-#define STATE_UNKNOWN_CARD_FOLDER					110
-#define STATE_UNKNOWN_CARD_FOLDER_POST_1	111
-#define STATE_UNKNOWN_CARD_TRACK					120
-#define STATE_UNKNOWN_CARD_TRACK_POST_1		121
-#define STATE_UNKNOWN_CARD_STORE					130
-#define STATE_UNKNOWN_CARD_STORE_POST_1		131
-#define STATE_UNKNOWN_CARD_ADMIN_MODE			140
-#define STATE_UNKNOWN_CARD_ADMIN_VALUE		141
+// player states
+#define STATE_IDLE														0
+#define STATE_NEW_CARD 												1
+#define STATE_REGULAR_PLAYBACK 								2
+#define STATE_UNKNOWN_CARD_INTRO 							3
+#define STATE_UNKNOWN_CARD_MODE								100
+#define STATE_UNKNOWN_CARD_FOLDER							110
+#define STATE_UNKNOWN_CARD_FOLDER_POST_1			111
+#define STATE_UNKNOWN_CARD_TRACK							120
+#define STATE_UNKNOWN_CARD_TRACK_POST_1				121
+#define STATE_UNKNOWN_CARD_STORE							130
+#define STATE_UNKNOWN_CARD_STORE_POST_1				131
+#define STATE_UNKNOWN_CARD_ADMIN_MODE					140
+#define STATE_UNKNOWN_CARD_ADMIN_VALUE				141
 
-#define MODE_SINGLE_RANDOM_TRACK 					1
-#define MODE_COMPLETE_FOLDER 							2
-#define MODE_RANDOM_FOLDER 								3
-#define MODE_SINGLE_TRACK 								4
-#define MODE_COMPLETE_FOLDER_CONTINUUES 	5
-#define MODE_ADMIN_CARD 									6
+// playback modes
+#define MODE_SINGLE_RANDOM_TRACK 							1
+#define MODE_COMPLETE_FOLDER 									2
+#define MODE_RANDOM_FOLDER 										3
+#define MODE_SINGLE_TRACK 										4
+#define MODE_COMPLETE_FOLDER_CONTINUUES 			5
+#define MODE_ADMIN_CARD 											6
 
-#define PLAY_TYP_FIRST										0
-#define PLAY_TYP_NEXT											1
-#define PLAY_TYP_PREV											2
-
+// admin modes
 #define ADMIN_CARD_MODE_MAX_VOLUME						1 // can't be 0 based due to voiceMenu
 #define ADMIN_CARD_MODE_LOCK									2
 #define ADMIN_CARD_MODE_MAX_PLAYTIME					3
 #define ADMIN_CARD_MODE_SHUTDOWN_AFTER_TRACK 	4
 
+// play function call mode
+#define PLAY_TYP_FIRST												0
+#define PLAY_TYP_NEXT													1
+#define PLAY_TYP_PREV													2
 
-#define COLOR_NONE            0
-#define COLOR_RED             1
-#define COLOR_GREEN           2
-#define COLOR_YELLOW          3
-#define COLOR_PURPLE          4
+#define COLOR_NONE            								0
+#define COLOR_RED             								1
+#define COLOR_GREEN           								2
+#define COLOR_YELLOW          								3
+#define COLOR_PURPLE          								4
 
 #define DEBUG_PRINT(str) \
    Serial.print(millis()); \
@@ -84,7 +87,7 @@
    Serial.print(':'); \
    Serial.print(__LINE__); \
    Serial.print(' '); \
-   Serial.println(str);
+   Serial.println(str); \
 
 #define debug_printf(c,i,args...) \
 	Serial.printf("%02i:%02i:%02i ",((millis()/1000UL)%86400)/3600 ,((millis()/1000UL)%3600)/60 ,(millis()/1000UL)%60); \
@@ -151,5 +154,6 @@ extern uint8_t uid[10];
 extern uint8_t state;
 extern uint8_t gpio_state;
 extern bool publish_card(listElement* e);
+extern void reset_autoreset();
 
 #endif
