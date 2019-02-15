@@ -33,7 +33,7 @@ bool publish_card(listElement * e){
 void callback(char * p_topic, byte * p_payload, uint16_t p_length){
 	p_payload[p_length] = 0x00;
 	debug_printf("MQTT", 0, "Topic %s, Msg %s\r\n", p_topic, p_payload);
-
+	reset_autoreset();
 	// /////////// TOPIC: ctrl /////////////
 	if (strcmp((const char *) p_topic, build_topic("ctrl", PC_TO_UNIT)) == 0) {
 		if (strcmp((const char *) p_payload, (const char *) "pause") == 0) {
@@ -258,6 +258,9 @@ void callback(char * p_topic, byte * p_payload, uint16_t p_length){
 			}
 			return;
 		} // data ok
+		else {
+			debug_println("WiFi", COLOR_RED, F("not enough data"));
+		}
 	} // topic == card
 } // callback
 

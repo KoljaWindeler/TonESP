@@ -28,6 +28,7 @@ bool mcp_interrupt_pending = true;
 bool power_down_after_track = false;
 uint8_t max_volume = 0;
 uint32_t power_down_at_ts = 0;
+uint32_t standby_at_ts = 0;
 
 uint32_t last_seen_card = 0;
 uint32_t last_asked_for_card = 0;

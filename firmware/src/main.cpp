@@ -84,11 +84,15 @@ void powerDown(const __FlashStringHelper * log){
 	Serial.println(log);
 	delay(200);
 	mcp.digitalWrite(MCP_PIN_POWER_SWITCH, LOW);
-	delay(16000);
+	// shuldn't matter
+	power_down_at_ts = 0;
+	standby_at_ts = 0;
+	//delay(16000);
 }
 
 // either the "next" track was pushed or the last track was over
 void play(uint8_t typ){
+	//reset_autoreset(); --> done via BUSY
 	if(mySettings.m_locked){
 		debug_println(("Play"),COLOR_RED,F("Play avoided, player in lock_mode"));
 		return;
@@ -227,7 +231,6 @@ void setup(){
 	Serial.println("\r\n====== SETUP =======");
 	Serial.println(F("TonESP 0.3 startup"));
 
-
 	pinMode(MCP_IRQ_PIN, INPUT);
 
 	// load data from storage
@@ -253,6 +256,7 @@ void setup(){
 	// wifi
 	wifi_setup();
 	wifi_scan_connect();
+	randomSeed(millis()); // somewhat random because the connection take randm time
 
 	// Initialize I2C
 	Wire.begin(SDA_PIN, SCL_PIN);
@@ -443,9 +447,21 @@ void loop(){
 		}
 	}
 
+	if(standby_at_ts){
+		if(millis() > standby_at_ts){
+			if(!(gpio_state&(1<<MCP_PIN_BUSY))){
+				// player is running
+				standby_at_ts = 0;
+			} else {
+				powerDown(F("standby power down"));
+			}
+		}
+	}
+
 	// /// end of track handling /////
 	if (gpio_pushed & (1 << MCP_PIN_BUSY)) {
 		//Serial.println("BUSY lifted");
+		reset_autoreset();
 	}
 
 	// /// pushing buttons /////
@@ -467,7 +483,7 @@ void loop(){
 			//delay(200);
 		}
 	}
-	if (gpio_pushed & (1 << MCP_PIN_PLAY)) { // prev
+	if (gpio_pushed & (1 << MCP_PIN_PLAY)) { // play/pause
 		if (state < STATE_UNKNOWN_CARD_MODE) {
 			if(mySettings.m_locked){
 				debug_println(("Play"),COLOR_RED,F("Play avoided, player in lock_mode"));
@@ -543,11 +559,13 @@ void loop(){
 				else if (card_found->get_folder() == ADMIN_CARD_MODE_MAX_PLAYTIME) {
 					power_down_at_ts = millis()+card_found->get_track()*60000UL; // track in minutes
 					Serial.printf("shutting down in %i minutes\r\n",card_found->get_track());
+					state = STATE_IDLE;
 				}
 				// shut down after track
 				else if (card_found->get_folder() == ADMIN_CARD_MODE_SHUTDOWN_AFTER_TRACK) {
 					Serial.println(F("shutting down after track"));
 					power_down_after_track = true;
+					state = STATE_IDLE;
 				}
 			}
 			//////////////////////////////////// ADMIN CARD ////////////////////////////////////
@@ -695,3 +713,15 @@ void loop(){
 	}
 	// //////////// setup card ///////////////
 } // loop
+
+
+void reset_autoreset(){
+	if(!(gpio_state&(1<<MCP_PIN_BUSY))){
+		// player is running
+		standby_at_ts = 0;
+	} else {
+		standby_at_ts = millis() + 10*60*1000; // 10 min
+		//standby_at_ts = millis() + 60*1000;
+		//Serial.printf("Setting timer to shut down in 1 min\r\n");
+	}
+}
