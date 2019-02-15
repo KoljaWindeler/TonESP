@@ -45,11 +45,11 @@ void settings::print_settings(){
 }
 
 bool settings::store(){
-	Serial.println("storing /settings.txt");
+	debug_println("set",COLOR_GREEN,F("storing /settings.txt"));
 	delay(200);
 	File f = SPIFFS.open("/settings.txt", "w");
 	if (!f) {
-    Serial.println("file open failed");
+		debug_println("set",COLOR_RED,F("file open failed"));
 		return false;
 	} else {
 		f.write(m_max_volume);
