@@ -583,16 +583,23 @@ void loop(){
 			}
 			// PLAY CARD //
 		} else {
-			debug_println(("card"),COLOR_RED,F("is unknwon, start setup"));
-			state = STATE_UNKNOWN_CARD_INTRO; // #State unknown card_found
-			debug_println(("STATE"),COLOR_YELLOW,F("-> STATE_UNKNOWN_CARD_INTRO"));
-			if(card_found==NULL && card_found->is_temporary){
-				delete card_found;
+			// new card, ignore in lock mode
+			if(mySettings.m_locked){
+				debug_println(("card"),COLOR_GREEN,F("player in lock down mode, ignoring everything except admin cards"));
+				state = STATE_IDLE; 
 			}
-			card_found = new listElement(card_scanned->get_uuid(), card_scanned->get_uuidLength()); // create empty card_found
-			publish_card(card_found);
-		}
-	}
+			else {
+				debug_println(("card"),COLOR_RED,F("is unknwon, start setup"));
+				state = STATE_UNKNOWN_CARD_INTRO; // #State unknown card_found
+				debug_println(("STATE"),COLOR_YELLOW,F("-> STATE_UNKNOWN_CARD_INTRO"));
+				if(card_found==NULL && card_found->is_temporary){
+					delete card_found;
+				}
+				card_found = new listElement(card_scanned->get_uuid(), card_scanned->get_uuidLength()); // create empty card_found
+				publish_card(card_found);
+			} // end of lock
+		} // end of new unknown card
+	}  // end of new card
 	// /////////// STATE_NEW_CARD //////////////////
 	// ///// playback ////////////////
 	else if (state == STATE_REGULAR_PLAYBACK) {
