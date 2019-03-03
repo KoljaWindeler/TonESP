@@ -7,5 +7,15 @@
 SD-Karte/01/
 SD-Karte/02/
 SD-Karte/03/
+SD-Karte/04/
+SD-Karte/05/
+SD-Karte/06/
+SD-Karte/07/
+SD-Karte/08/
 
 mqtt.sh
+
+schematic/*.b*
+schematic/*.drt
+schematic/*.gbl
+schematic/*.nc
