@@ -34,10 +34,12 @@
 #define MCP_PIN_RIGHT         3	// low active
 #define MCP_PIN_PLAY          4	// low active
 #define MCP_PIN_BUSY          5 // low = playing
-#define MCP_PIN_PN532_IRQ   	6
+#define MCP_PIN_PN532_IRQ   	6 // board ok
+#define MCP_PIN_OPEN_INPUT_1 	7 //not used
 // port B - outputs
-#define MCP_PIN_PN532_RESET 	8
-#define MCP_PIN_POWER_SWITCH  9
+#define MCP_PIN_PN532_RESET 	8 // board ok
+#define MCP_PIN_POWER_SWITCH  9 //
+#define MCP_PIN_TIGER_TALK   	10 // board ok
 
 // player states
 #define STATE_IDLE														0
@@ -151,10 +153,14 @@ extern listElement* card_scanned;
 extern listElement* card_found;
 extern DFMiniMp3 mp3;
 extern PubSubClient client;
+extern bool power_down_after_track;
 extern uint8_t uid[10];
 extern uint8_t state;
 extern uint8_t gpio_state;
-extern bool publish_card(listElement* e);
+extern bool publish_card(listElement* e, uint8_t level);
+extern bool publish_lock();
+extern bool publish_shutdown_afterTrack();
+extern bool publish_online(char *t);
 extern void reset_autoreset();
 
 #endif

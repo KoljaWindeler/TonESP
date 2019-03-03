@@ -12,19 +12,68 @@ char m_msg_buffer[MSG_BUFFER_SIZE];
 uint32_t wifi_last_connect = 0;
 
 
-bool publish_card(listElement * e){
+bool publish_online(char *t){
+	uint8_t buffer[64];
+	uint8_t ret;
+	ret = client.publish(build_topic("online", UNIT_TO_PC), t);
+	for (uint8_t i = 0; i < 10; i++) {
+		client.loop();
+		delay(10); // let wifi process data
+	}
+	return ret;
+}
+
+bool publish_lock(){
+	uint8_t buffer[64];
+	uint8_t ret;
+	if(mySettings.m_locked){
+		ret = client.publish(build_topic("lock", UNIT_TO_PC), (char *) "ON");
+	} else {
+		ret = client.publish(build_topic("lock", UNIT_TO_PC), (char *) "OFF");
+	}
+	for (uint8_t i = 0; i < 10; i++) {
+		client.loop();
+		delay(10); // let wifi process data
+	}
+	return ret;
+}
+
+bool publish_shutdown_afterTrack(){
+	uint8_t buffer[64];
+	uint8_t ret;
+	if(power_down_after_track){
+		ret = client.publish(build_topic("shutdownTrack", UNIT_TO_PC), (char *) "ON");
+	} else {
+		ret = client.publish(build_topic("shutdownTrack", UNIT_TO_PC), (char *) "OFF");
+	}
+	for (uint8_t i = 0; i < 10; i++) {
+		client.loop();
+		delay(10); // let wifi process data
+	}
+	return ret;
+}
+
+
+bool publish_card(listElement * e, uint8_t level){
 	uint8_t buffer[64];
 	uint8_t ret;
 
 	if (e == NULL) {
 		return false;
 	}
-	e->dump_ascii(buffer);
-	ret = client.publish(build_topic("out", UNIT_TO_PC), (char *) buffer);
+	if(level==0){
+		ret = client.publish(build_topic("card", UNIT_TO_PC), "OFF");
+	}
 	for (uint8_t i = 0; i < 10; i++) {
 		client.loop();
 		delay(10); // let wifi process data
 	}
+	e->dump_ascii(buffer,level);
+	for (uint8_t i = 0; i < 10; i++) {
+		client.loop();
+		delay(10); // let wifi process data
+	}
+	ret = client.publish(build_topic("card", UNIT_TO_PC), (char *) buffer);
 	return ret;
 }
 
@@ -57,7 +106,7 @@ void callback(char * p_topic, byte * p_payload, uint16_t p_length){
 			card_scanned = cardList.get_element_nr(ii);
 			// uint8_t buffer[32];
 			while (card_scanned != NULL) {
-				publish_card(card_scanned);
+				publish_card(card_scanned,3); //3 == more info
 				ii++;
 				card_scanned = cardList.get_element_nr(ii);
 			}
@@ -331,7 +380,7 @@ bool wifi_connected(){
 				// if(client.connect("TonESP1", "ha", "ah", "TonESP1/INFO", 0, true, "lost signal")){
 				debug_println("MQTT", COLOR_GREEN, "connected");
 				if ((gpio_state & (1 << MCP_PIN_BUSY)) && !mySettings.m_locked) { // active high, play only if nothing else is on
-					mp3.playMp3FolderTrack(969);
+					mp3.playAdvertisement(969);
 				}
 				wifi_status = WIFI_STATE_CONNECTED;
 
@@ -343,6 +392,8 @@ bool wifi_connected(){
 				for (uint8_t i; i < 10; i++) {
 					client.loop();
 				}
+				// only to show that we're online
+				publish_online("ON");
 			}
 		}
 		client.loop();
