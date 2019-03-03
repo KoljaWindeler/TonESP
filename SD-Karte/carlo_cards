@@ -1,0 +1,54 @@
+#define MODE_SINGLE_RANDOM_TRACK 		1
+#define MODE_COMPLETE_FOLDER 			2
+#define MODE_RANDOM_FOLDER 			3
+#define MODE_SINGLE_TRACK 			4
+#define MODE_COMPLETE_FOLDER_CONTINUUES 	5
+#define MODE_ADMIN_CARD 			6
+
+// admin modes
+#define ADMIN_CARD_MODE_MAX_VOLUME		1 // can't be 0 based due to voiceMenu
+#define ADMIN_CARD_MODE_LOCK			2
+#define ADMIN_CARD_MODE_MAX_PLAYTIME		3
+#define ADMIN_CARD_MODE_SHUTDOWN_AFTER_TRACK 	4
+
+-----------------------------------------------------------------------------------------------------------------------
+
+Folder 01 -> welcome tracks
+Folder 02 -> geschichten
+	Track 02.01 -> grueffelo
+	Track 02.02 -> kleine giraffe
+	Track 02.03 -> Regenbogenfisch
+Folder 03 -> lieder
+	Track 03.01 -> Bruder Jakob
+	Track 03.02 -> Affenbande
+	Track 03.03 -> Landungsbruecke
+	Track 03.04 -> von den blauen bergen
+	Track 03.05 -> wer will schon fleissige Handwerker sehen
+Folder 04 -> Tiere
+	Track 04.01 -> Hund
+	Track 04.02 -> Katze
+	Track 04.03 -> Kuh
+	Track 04.04 -> Ente
+	Track 04.05 -> Schwein
+	Track 04.05 -> Huhn
+Folder 06 -> Enny und Mo
+Folder 07
+
+-----------------------------------------------------------------------------------------------------------------------
+#define ACTION_CREATE 		1 -> 1,01010101010101010101,1,1,0,0
+#define ACTION_DELETE 		2 -> 2,FFFFFFFFFFFFFFFFFE25
+#define ACTION_FORMAT 		3 -> danger
+#define ACTION_EMULATE 		4 -> 4,FFFFFFFFFFFFFFFFFE25
+-----------------------------------------------------------------------------------------------------------------------
+
+TonESP/r/card 112233445566778899AA,03,04,005,00000000000000000000 // random folder tiersounds
+TonESP/r/card 01010101010101010101,01,01,002,00000000000000000000 // startup, random 1st folder
+TonESP/r/card 02020202020202020202,06,03,001,00000000000000000000 // admin, playtime 1 min
+TonESP/r/card 03030303030303030303,06,04,000,00000000000000000000 // admin, shutdown after track
+TonESP/r/card FFFFFFFFFFFFFFFFFFFE,06,02,000,00000000000000000000 // admin lock mode
+TonESP/r/card 99398129BEFE3F3C003C,04,04,001,00000000000000000000 // hund
+TonESP/r/card E947862917FF3F5417FF,04,04,002,00000000000000000000 // katze
+TonESP/r/card BB289D00BEFE3F830183,04,04,006,00000000000000000000 // huhn
+TonESP/r/card 092AAE55F4FE3F020000,04,02,001,00000000000000000000 // grueffelo
+TonESP/r/card E9B2822933FF3F2F6361,04,02,002,00000000000000000000 // giraffe
+TonESP/r/card 123456789ADCDEF12345,04,02,002,00000000000000000000 // Regenbogenfisch
