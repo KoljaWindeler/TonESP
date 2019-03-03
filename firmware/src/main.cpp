@@ -506,6 +506,7 @@ void loop(){
 		if (state < STATE_UNKNOWN_CARD_MODE) {
 			if(mySettings.m_locked){
 				debug_println(("Play"),COLOR_RED,F("Play avoided, player in lock_mode"));
+				publish_lock();
 			} else {
 				if (gpio_state & (1 << MCP_PIN_BUSY)) {
 					debug_println("Play",COLOR_PURPLE,"Play");
@@ -564,9 +565,11 @@ void loop(){
 					if(mySettings.m_locked){
 						mySettings.m_locked = 0;
 						Serial.println(F("Device unlocked"));
+						mp3.playAdvertisement(204);
 					} else {
 						mySettings.m_locked = 1;
 						Serial.println(F("Device locked"));
+						mp3.playAdvertisement(203);
 					}
 					publish_lock();
 					mySettings.store();
@@ -579,6 +582,7 @@ void loop(){
 				else if (card_found->get_folder() == ADMIN_CARD_MODE_MAX_PLAYTIME) {
 					power_down_at_ts = millis()+card_found->get_track()*60000UL; // track in minutes
 					Serial.printf("shutting down in %i minutes\r\n",card_found->get_track());
+					mp3.playAdvertisement(205);
 					state = STATE_IDLE;
 				}
 				// shut down after track
@@ -586,6 +590,7 @@ void loop(){
 					Serial.println(F("shutting down after track"));
 					power_down_after_track = true;
 					state = STATE_IDLE;
+					mp3.playAdvertisement(205);
 					publish_shutdown_afterTrack();
 				}
 			}
@@ -598,6 +603,7 @@ void loop(){
 					state = STATE_REGULAR_PLAYBACK; // #State regular playing
 				} else {
 					debug_println(("play"),COLOR_RED,F("Device in lock mode, not playing"));
+					publish_lock();
 					// card consumed
 					state = STATE_IDLE;
 				}
@@ -607,6 +613,7 @@ void loop(){
 			// new card, ignore in lock mode
 			if(mySettings.m_locked){
 				debug_println(("card"),COLOR_GREEN,F("player in lock down mode, ignoring everything except admin cards"));
+				publish_lock();
 				state = STATE_IDLE;
 			}
 			else {
