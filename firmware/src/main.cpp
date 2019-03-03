@@ -39,7 +39,7 @@ bool voiceMenu(uint8_t * data, uint8_t max, uint16_t offset, uint8_t * status){
 	//if(*data>max){
 	//	delay(10000);
 	//}
-	if (gpio_pushed & (1 << MCP_PIN_UP)) {
+	if (gpio_pushed & (1 << MCP_PIN_RIGHT)) {
 		*status = 1;
 		//Serial.printf("in %i, max %i\r\n",*data,max);
 		if (*data < max) {
@@ -50,7 +50,7 @@ bool voiceMenu(uint8_t * data, uint8_t max, uint16_t offset, uint8_t * status){
 		ret  = true; // return true and play
 		play = true; // key down so we should at least play the last track again
 	}
-	if (gpio_pushed & (1 << MCP_PIN_DOWN)) {
+	if (gpio_pushed & (1 << MCP_PIN_LEFT)) {
 		*status = 2;
 		if (*data > 1 && *data<=max) {
 			*data = (*data - 1);
@@ -81,8 +81,11 @@ bool voiceMenu(uint8_t * data, uint8_t max, uint16_t offset, uint8_t * status){
 
 // we're shutting down on multiple occasios
 void powerDown(const __FlashStringHelper * log){
+	publish_online("OFF");
 	Serial.println(log);
 	delay(200);
+	mcp.digitalWrite(MCP_PIN_POWER_SWITCH, HIGH);
+	delay(1000);
 	mcp.digitalWrite(MCP_PIN_POWER_SWITCH, LOW);
 	// shuldn't matter
 	power_down_at_ts = 0;
@@ -291,11 +294,15 @@ void setup(){
 		mcp.digitalWrite(MCP_PIN_PN532_RESET, HIGH); // disable reset
 		// power switch
 		mcp.pinMode(MCP_PIN_POWER_SWITCH, OUTPUT);
-		mcp.digitalWrite(MCP_PIN_POWER_SWITCH, HIGH); // activate power
+		mcp.digitalWrite(MCP_PIN_POWER_SWITCH, LOW); // activate power
 		// Init PN532 with a hardware reset
 		mcp.digitalWrite(MCP_PIN_PN532_RESET, LOW);
 		delay(50);
 		mcp.digitalWrite(MCP_PIN_PN532_RESET, HIGH);
+
+		mcp.pinMode(MCP_PIN_TIGER_TALK, OUTPUT);
+		mcp.digitalWrite(MCP_PIN_TIGER_TALK, LOW); // activate power
+
 
 	} else {
 		Serial.println("!!!!!!!!!!!!!!!!!!!!!! mcp not found !!!!!!!!!!!!!!!!!!!!!!");
@@ -344,6 +351,8 @@ void setup(){
 	last_seen_card = millis();                 // will trigger a "look for card"
 
 	Serial.println("====== SETUP =======");
+	delay(2000); //tigerbox boot time
+	//WiFi.mode(WIFI_OFF);
 } // setup
 
 
@@ -484,6 +493,16 @@ void loop(){
 		}
 	}
 	if (gpio_pushed & (1 << MCP_PIN_PLAY)) { // play/pause
+		// unblock tigerbox, tiger box will turn off amp when play/pause is pushed.
+		// so we push it once more to unblock it again
+		delay(50);
+		mcp.pinMode(MCP_PIN_PLAY, OUTPUT);
+		mcp.digitalWrite(MCP_PIN_PLAY,LOW);
+		delay(50);
+		mcp.digitalWrite(MCP_PIN_PLAY,HIGH);
+		mcp.pinMode(MCP_PIN_PLAY, INPUT);
+		mcp.pullUp(MCP_PIN_PLAY, HIGH); // turn on a 100K pullup internally
+
 		if (state < STATE_UNKNOWN_CARD_MODE) {
 			if(mySettings.m_locked){
 				debug_println(("Play"),COLOR_RED,F("Play avoided, player in lock_mode"));
@@ -530,7 +549,7 @@ void loop(){
 	if (state == STATE_NEW_CARD) {
 		card_found = cardList.is_uid_known(card_scanned->get_uuid(), card_scanned->get_uuidLength());
 		if (card_found != NULL) {
-			publish_card(card_found);
+			publish_card(card_found,0);
 			debug_println(("card"),COLOR_GREEN,F("known to the database"));
 			//////////////////////////////////// ADMIN CARD ////////////////////////////////////
 			if (card_found->get_mode() == MODE_ADMIN_CARD) {
@@ -549,6 +568,7 @@ void loop(){
 						mySettings.m_locked = 1;
 						Serial.println(F("Device locked"));
 					}
+					publish_lock();
 					mySettings.store();
 					// card consumed
 					//delete card_found; -> don't delete, it is a known card
@@ -566,6 +586,7 @@ void loop(){
 					Serial.println(F("shutting down after track"));
 					power_down_after_track = true;
 					state = STATE_IDLE;
+					publish_shutdown_afterTrack();
 				}
 			}
 			//////////////////////////////////// ADMIN CARD ////////////////////////////////////
@@ -586,7 +607,7 @@ void loop(){
 			// new card, ignore in lock mode
 			if(mySettings.m_locked){
 				debug_println(("card"),COLOR_GREEN,F("player in lock down mode, ignoring everything except admin cards"));
-				state = STATE_IDLE; 
+				state = STATE_IDLE;
 			}
 			else {
 				debug_println(("card"),COLOR_RED,F("is unknwon, start setup"));
@@ -596,7 +617,7 @@ void loop(){
 					delete card_found;
 				}
 				card_found = new listElement(card_scanned->get_uuid(), card_scanned->get_uuidLength()); // create empty card_found
-				publish_card(card_found);
+				publish_card(card_found,0);
 			} // end of lock
 		} // end of new unknown card
 	}  // end of new card
