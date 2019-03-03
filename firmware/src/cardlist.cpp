@@ -39,11 +39,21 @@ byte* listElement::get_userdata(){
 }
 
 void listElement::dump_ascii(uint8_t* a){
+	dump_ascii(a,3);
+}
+
+void listElement::dump_ascii(uint8_t* a, uint8_t format){
 	for(uint8_t i=0;i<10;i++){
 		sprintf((char*)a,"%02X",m_uidByte[i]);
 		a+=2;
 	}
+	if(format==0){
+		return;
+	}
 	a+=sprintf((char*)a,",%02i,%02i,%03i,",m_mode%100, m_folder%100, m_track%1000);
+	if(format==1){
+		return;
+	}
 	for(uint8_t i=0;i<10;i++){
 		sprintf((char*)a,"%02X",m_userdata[i]);
 		a+=2;

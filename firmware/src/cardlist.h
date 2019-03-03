@@ -28,6 +28,7 @@ class listElement {
 		void set_userdata(byte* data);
 		void set_next(listElement* element);
 		void dump_ascii(uint8_t* a);
+		void dump_ascii(uint8_t* a, uint8_t format);
 		uint8_t is_temporary;
 	private:
 		byte		m_uidByte[10];
